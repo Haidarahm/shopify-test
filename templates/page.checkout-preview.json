@@ -1,6 +1,6 @@
 {
   "sections": {
-    "checkout-preview": {
+    "main": {
       "type": "checkout-preview",
       "settings": {
         "delivery_fee_label": "0.900 OMR",
@@ -8,5 +8,5 @@
       }
     }
   },
-  "order": ["checkout-preview"]
+  "order": ["main"]
 }

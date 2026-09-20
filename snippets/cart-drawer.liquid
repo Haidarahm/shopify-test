@@ -416,18 +416,18 @@
             </button>
           </noscript>
 
-          <button
-            type="submit"
+          <a
+            href="{{ routes.cart_url }}"
             id="CartDrawer-Checkout"
             class="cart__checkout-button button"
-            name="checkout"
-            form="CartDrawer-Form"
             {% if cart == empty %}
-              disabled
+              aria-disabled="true"
+              tabindex="-1"
+              style="pointer-events: none; opacity: 0.5;"
             {% endif %}
           >
             {{ 'sections.cart.checkout' | t }}
-          </button>
+          </a>
         </div>
       </div>
     </div>
