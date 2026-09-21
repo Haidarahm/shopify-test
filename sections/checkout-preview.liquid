@@ -31,7 +31,7 @@
       aria-labelledby="location-sheet-title"
     >
       <h2 id="location-sheet-title" class="location-sheet__title">Select Location on Map</h2>
-      <label class="location-sheet__search" for="location-search-input">
+      <div class="location-sheet__search">
         <svg class="location-sheet__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="7" />
           <path d="M20 20l-3.5-3.5" />
@@ -42,9 +42,10 @@
           type="search"
           placeholder="Search for locations"
           autocomplete="off"
+          aria-label="Search for locations"
           aria-controls="location-search-results"
         >
-      </label>
+      </div>
       <ul class="location-sheet__results" id="location-search-results" role="listbox"></ul>
     </div>
   </div>
@@ -58,7 +59,7 @@
       aria-labelledby="country-sheet-title"
     >
       <h2 id="country-sheet-title" class="location-sheet__title">Select country code</h2>
-      <label class="location-sheet__search" for="country-search-input">
+      <div class="location-sheet__search">
         <svg class="location-sheet__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="7" />
           <path d="M20 20l-3.5-3.5" />
@@ -69,9 +70,10 @@
           type="search"
           placeholder="Search country or code"
           autocomplete="off"
+          aria-label="Search country or code"
           aria-controls="country-search-results"
         >
-      </label>
+      </div>
       <ul class="location-sheet__results" id="country-search-results" role="listbox"></ul>
     </div>
   </div>
