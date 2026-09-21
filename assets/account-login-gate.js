@@ -1,167 +1,123 @@
 (function () {
-  var SEEN_KEY = 'account_login_gate_seen';
-  var PENDING_KEY = 'pending_checkout_after_login';
+  var COMPACT_STYLE_ID = 'account-sheet-compact';
 
-  function buildLoginUrl() {
-    var returnTo = encodeURIComponent('/cart');
-    var canonical = (window.shopCanonicalUrl || '').replace(/\/$/, '');
-    var origin = window.location.origin || '';
-    if (canonical && !/127\.0\.0\.1|localhost/i.test(canonical)) {
-      return (
-        canonical +
-        '/customer_authentication/login?return_to=' +
-        returnTo
-      );
+  function accountEl() {
+    var nodes = document.querySelectorAll('shopify-account');
+    var fallback = null;
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      var rect = el.getBoundingClientRect();
+      var style = window.getComputedStyle(el);
+      var parent = el.parentElement;
+      var parentHidden =
+        parent &&
+        (window.getComputedStyle(parent).display === 'none' ||
+          window.getComputedStyle(parent).visibility === 'hidden');
+      if (parentHidden || style.display === 'none') continue;
+      if (rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden') return el;
+      if (!fallback) fallback = el;
     }
-
-    if (origin && !/127\.0\.0\.1|localhost/i.test(origin)) {
-      return (
-        origin.replace(/\/$/, '') +
-        '/customer_authentication/login?return_to=' +
-        returnTo
-      );
-    }
-    return '/customer_authentication/login?return_to=' + returnTo;
+    return fallback;
   }
 
-  function isLoggedIn() {
-    return document.documentElement.getAttribute('data-customer-logged-in') === 'true';
+  function compactSheet(el) {
+    if (!el || !el.shadowRoot) return;
+    if (!el.shadowRoot.getElementById(COMPACT_STYLE_ID)) {
+      var style = document.createElement('style');
+      style.id = COMPACT_STYLE_ID;
+      style.textContent =
+        '.dialog{height:fit-content!important;min-height:0!important;max-height:min(85vh,100%)!important;--dialog-min-height:0!important;}' +
+        '.account__header{padding:10px 14px!important;gap:8px!important;}' +
+        '.account__content{padding:12px 14px 14px!important;gap:10px!important;margin-top:-10px!important;}' +
+        '.account__menu-region{margin-top:4px!important;}' +
+        '.stack-inline{gap:6px!important;}' +
+        '.button.outline{padding:10px 14px!important;min-height:0!important;}' +
+        '.shop-login,.social-login{margin:0!important;}';
+      el.shadowRoot.appendChild(style);
+    }
+
+    var dialog = el.shadowRoot.querySelector('dialog');
+    if (!dialog) return;
+    dialog.style.setProperty('--dialog-min-height', '0px', 'important');
+    dialog.style.setProperty('min-height', '0', 'important');
+    dialog.style.setProperty('height', 'fit-content', 'important');
+    dialog.style.setProperty('max-height', '85vh', 'important');
   }
 
-  function goToHostedLogin() {
-    window.location.assign(buildLoginUrl());
+  function isOpen(el) {
+    var dialog = el.shadowRoot && el.shadowRoot.querySelector('dialog');
+    return !!(dialog && dialog.open);
   }
 
-  function startSignIn() {
-    try {
-      sessionStorage.setItem(SEEN_KEY, '1');
-    } catch (e) {
-      
+  function openShopifyAccount() {
+    var el = accountEl();
+    if (!el) return false;
+    compactSheet(el);
+    if (isOpen(el)) return true;
+
+    if (typeof el.showModal === 'function') {
+      el.showModal();
+      compactSheet(el);
+      requestAnimationFrame(function () {
+        compactSheet(el);
+      });
+      if (isOpen(el)) return true;
     }
-    var gate = document.getElementById('AccountLoginGate');
-    var needsCheckout =
-      gate && gate.getAttribute('data-checkout-required') === 'true';
-    if (needsCheckout) {
-      try {
-        sessionStorage.setItem(PENDING_KEY, '1');
-      } catch (e) {
-        
-      }
+
+    var btn =
+      (el.shadowRoot && el.shadowRoot.querySelector('button')) ||
+      el.querySelector('[slot="signed-out-avatar"]') ||
+      el;
+    if (btn && typeof btn.click === 'function') {
+      btn.click();
+      compactSheet(el);
+      return isOpen(el);
     }
-    hideGate(true);
-    goToHostedLogin();
+    return false;
   }
 
-  function requireLoginThenCheckout(event) {
-    if (isLoggedIn()) return;
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-    try {
-      sessionStorage.setItem(PENDING_KEY, '1');
-    } catch (e) {
-      
-    }
-    showGate(true);
+  function openOnCart() {
+    if (window.location.pathname.indexOf('/cart') !== 0) return;
+    if (document.documentElement.getAttribute('data-customer-logged-in') === 'true') return;
+
+    var tries = 0;
+    var timer = window.setInterval(function () {
+      tries += 1;
+      if (openShopifyAccount() || tries > 40) window.clearInterval(timer);
+    }, 100);
   }
 
-  function showGate(forceCheckout) {
-    var gate = document.getElementById('AccountLoginGate');
-    if (!gate) {
-      goToHostedLogin();
-      return;
-    }
-    gate.hidden = false;
-    document.body.classList.add('overflow-hidden');
-    if (forceCheckout) {
-      gate.setAttribute('data-checkout-required', 'true');
-    } else {
-      gate.removeAttribute('data-checkout-required');
-    }
-  }
-
-  function hideGate(keepPending) {
-    var gate = document.getElementById('AccountLoginGate');
-    if (!gate) return;
-    if (gate.getAttribute('data-checkout-required') === 'true' && !keepPending) {
-      try {
-        sessionStorage.removeItem(PENDING_KEY);
-      } catch (e) {
-        
-      }
-    }
-    gate.removeAttribute('data-checkout-required');
-    gate.hidden = true;
-    document.body.classList.remove('overflow-hidden');
-  }
-
-  function bindCheckoutGates() {
-    if (isLoggedIn()) return;
-    var nodes = document.querySelectorAll(
-      '#CartDrawer-Checkout, #cart-notification-form, #checkout, a.cart__checkout-button'
-    );
-    nodes.forEach(function (el) {
-      if (el.dataset.loginGateBound === '1') return;
-      el.dataset.loginGateBound = '1';
-      el.addEventListener('click', requireLoginThenCheckout, true);
-    });
-  }
-
-  function onReady() {
-    if (isLoggedIn()) {
-      try {
-        if (sessionStorage.getItem(PENDING_KEY) === '1') {
-          sessionStorage.removeItem(PENDING_KEY);
-          if (window.location.pathname.indexOf('/cart') !== 0) {
-            window.location.href = '/cart';
-            return;
-          }
-        }
-      } catch (e) {
-        
-      }
-      return;
-    }
-
-    var gate = document.getElementById('AccountLoginGate');
-    if (gate) {
-      gate.querySelectorAll('[data-login-gate-dismiss]').forEach(function (el) {
-        el.addEventListener('click', function () {
-          hideGate();
-          try {
-            sessionStorage.setItem(SEEN_KEY, '1');
-          } catch (e) {
-            
-          }
+  function wireCompact() {
+    document.querySelectorAll('shopify-account').forEach(function (el) {
+      compactSheet(el);
+      el.addEventListener('open', function () {
+        compactSheet(el);
+        // Shopify sets --dialog-min-height after open; clear it again.
+        requestAnimationFrame(function () {
+          compactSheet(el);
+          setTimeout(function () {
+            compactSheet(el);
+          }, 50);
         });
       });
-      gate.querySelectorAll('[data-login-gate-signin]').forEach(function (el) {
-        el.addEventListener('click', startSignIn);
-      });
-    }
-
-    bindCheckoutGates();
-    document.addEventListener('cart:updated', bindCheckoutGates);
-    new MutationObserver(bindCheckoutGates).observe(document.body, {
-      childList: true,
-      subtree: true,
     });
+  }
 
-    try {
-      if (sessionStorage.getItem(SEEN_KEY) !== '1') {
-        window.setTimeout(function () {
-          showGate(false);
-        }, 900);
-      }
-    } catch (e) {
-      showGate(false);
-    }
+  function openOnCart() {
+    wireCompact();
+    if (window.location.pathname.indexOf('/cart') !== 0) return;
+    if (document.documentElement.getAttribute('data-customer-logged-in') === 'true') return;
+
+    var tries = 0;
+    var timer = window.setInterval(function () {
+      tries += 1;
+      if (openShopifyAccount() || tries > 40) window.clearInterval(timer);
+    }, 100);
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', onReady);
+    document.addEventListener('DOMContentLoaded', openOnCart);
   } else {
-    onReady();
+    openOnCart();
   }
 })();

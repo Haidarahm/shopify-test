@@ -36,10 +36,9 @@
     </a>
 
     {%- if shop.customer_accounts_enabled and customer == null -%}
-      {%- capture cart_login_url -%}https://{{ shop.permanent_domain }}/customer_authentication/login?return_to={{ '/cart' | url_encode }}{%- endcapture -%}
       <h2 class="cart__login-title">{{ 'sections.cart.login.title' | t }}</h2>
       <p class="cart__login-paragraph">
-        {{ 'sections.cart.login.paragraph_html' | t: link: cart_login_url }}
+        {{ 'sections.cart.login.paragraph_html' | t: link: '#shopify-account' }}
       </p>
     {%- endif -%}
   </div>

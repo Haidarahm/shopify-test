@@ -1,61 +1,7 @@
-.account-login-gate {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.6rem;
-}
-
-.account-login-gate[hidden] {
-  display: none !important;
-}
-
-.account-login-gate__backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-}
-
-.account-login-gate__panel {
-  position: relative;
-  z-index: 1;
-  width: min(100%, 36rem);
-  padding: 2.4rem 2rem;
-  border-radius: 1.2rem;
-  background: rgb(var(--color-background));
-  color: rgb(var(--color-foreground));
-  box-shadow: 0 1.2rem 3.2rem rgba(0, 0, 0, 0.18);
-  text-align: center;
-}
-
-.account-login-gate__title {
-  margin: 0 0 0.8rem;
-  font-size: 2rem;
-}
-
-.account-login-gate__text {
-  margin: 0 0 1.6rem;
-  font-size: 1.4rem;
-  line-height: 1.45;
-  opacity: 0.85;
-}
-
-.account-login-gate__cta {
-  width: 100%;
-  margin-bottom: 1.2rem;
-  text-decoration: none;
-  box-sizing: border-box;
-}
-
-.account-login-gate__later {
-  display: inline-block;
-  font-size: 1.3rem;
-}
-
+/* Account icon + compact bottom sheet for Shopify's <shopify-account>. */
 shopify-account {
   --shopify-account-signed-in-avatar-size: 2.4rem;
+  --shopify-account-radius-dialog: 20px 20px 0 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -76,4 +22,25 @@ shopify-account {
   background: transparent;
   color: inherit;
   cursor: pointer;
+}
+
+/* Bottom sheet: hug content height, drop unused empty space. */
+@media screen and (max-width: 749px) {
+  shopify-account {
+    --shopify-account-dialog-position-top: auto;
+  }
+
+  shopify-account::part(dialog) {
+    inset: auto 0 0 0 !important;
+    top: auto !important;
+    bottom: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    height: fit-content !important;
+    max-height: min(85vh, 100%);
+    margin: 0;
+    border-radius: 20px 20px 0 0;
+    transform: none;
+    overflow: auto;
+  }
 }

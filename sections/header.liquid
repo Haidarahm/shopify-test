@@ -696,7 +696,7 @@
       </details-modal>
 
       {%- if shop.customer_accounts_enabled -%}
-        <div class="header__icon header__icon--account focus-inset{% if section.settings.menu != blank %} small-hide{% endif %}">
+        <div class="header__icon header__icon--account focus-inset">
           <shopify-account menu="customer-account-main-menu">
             <span slot="signed-out-avatar" class="header__icon header__icon--account">
               {% render 'icon-account' %}

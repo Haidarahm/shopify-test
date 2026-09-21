@@ -1,14 +1,3 @@
-{%- unless customer -%}
-  {%- capture checkout_auth_url -%}https://{{ shop.permanent_domain }}/customer_authentication/login?return_to={{ '/cart' | url_encode }}{%- endcapture -%}
-  <script>
-    window.location.replace({{ checkout_auth_url | json }});
-  </script>
-  <noscript>
-    <meta http-equiv="refresh" content="0;url={{ checkout_auth_url | escape }}">
-    <p><a href="{{ checkout_auth_url }}">Sign in to continue to checkout</a></p>
-  </noscript>
-{%- else -%}
-
 {{ 'checkout-preview.css' | asset_url | stylesheet_tag }}
 
 <div
@@ -82,8 +71,6 @@
 <script src="{{ 'checkout-preview-location.js' | asset_url }}" defer></script>
 <script src="{{ 'checkout-preview-phone.js' | asset_url }}" defer></script>
 <script src="{{ 'checkout-preview.js' | asset_url }}" defer></script>
-
-{%- endunless -%}
 
 {% schema %}
 {
