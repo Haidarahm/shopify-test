@@ -279,14 +279,23 @@
   function wireLocationSearch() {
     var btn = document.getElementById("address-action-btn");
     var input = document.getElementById("location-search-input");
+    var sheet = document.getElementById("location-sheet");
     var backdrop = document.getElementById("location-sheet-backdrop");
     if (!btn || !input) return;
     btn.addEventListener("click", openLocationSheet);
     input.addEventListener("input", function () {
       renderResults(fuzzySearch(input.value));
     });
+    function onOutsidePointer(e) {
+      if (!sheet || !sheet.classList.contains("is-open")) return;
+      if (e.target.closest && e.target.closest(".location-sheet__panel")) return;
+      closeLocationSheet();
+    }
     if (backdrop) {
-      backdrop.addEventListener("click", closeLocationSheet);
+      backdrop.addEventListener("pointerdown", closeLocationSheet);
+    }
+    if (sheet) {
+      sheet.addEventListener("pointerdown", onOutsidePointer);
     }
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") closeLocationSheet();

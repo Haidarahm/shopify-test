@@ -294,9 +294,18 @@
       input.addEventListener("input", function () {
         renderCountryResults(searchCountries(input.value));
       });
+      var sheet = document.getElementById("country-sheet");
       var backdrop = document.getElementById("country-sheet-backdrop");
+      function onOutsidePointer(e) {
+        if (!sheet || !sheet.classList.contains("is-open")) return;
+        if (e.target.closest && e.target.closest(".location-sheet__panel")) return;
+        closeCountrySheet();
+      }
       if (backdrop) {
-        backdrop.addEventListener("click", closeCountrySheet);
+        backdrop.addEventListener("pointerdown", closeCountrySheet);
+      }
+      if (sheet) {
+        sheet.addEventListener("pointerdown", onOutsidePointer);
       }
       document.addEventListener("keydown", function (e) {
         if (e.key === "Escape") closeCountrySheet();

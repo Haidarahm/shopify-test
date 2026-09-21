@@ -264,7 +264,7 @@
 .location-sheet {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 10000;
   pointer-events: none;
 }
 
@@ -278,6 +278,7 @@
   background: rgba(0, 0, 0, 0.35);
   opacity: 0;
   transition: opacity 0.28s ease;
+  cursor: pointer;
 }
 
 .location-sheet.is-open .location-sheet__backdrop {
@@ -299,6 +300,7 @@
   flex-direction: column;
   box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.12);
   transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: auto;
 }
 
 .location-sheet.is-open .location-sheet__panel {
@@ -914,11 +916,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .checkout-preview *,
-  .checkout-preview *::before,
-  .checkout-preview *::after {
+  .checkout-preview *:not(.location-sheet__panel):not(.location-sheet__backdrop),
+  .checkout-preview *:not(.location-sheet__panel):not(.location-sheet__backdrop)::before,
+  .checkout-preview *:not(.location-sheet__panel):not(.location-sheet__backdrop)::after {
     transition: none !important;
     transform: none !important;
+  }
+
+  .location-sheet__backdrop,
+  .location-sheet__panel {
+    transition: none !important;
   }
 }
 
