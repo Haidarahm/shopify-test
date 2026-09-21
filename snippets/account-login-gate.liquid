@@ -1,8 +1,3 @@
-{% comment %}
-  Login gate for guests: first-visit prompt + checkout requires sign-in.
-  Uses Shopify's hosted customer authentication (Google/email when enabled in Admin).
-  Does not alter checkout UI markup.
-{% endcomment %}
 {%- if shop.customer_accounts_enabled and customer == nil -%}
   {{ 'account-login-gate.css' | asset_url | stylesheet_tag }}
   <div

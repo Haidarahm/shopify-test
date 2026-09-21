@@ -1,4 +1,3 @@
-/* checkout-preview-phone.js — theme asset (no ES modules) */
 (function (global) {
   "use strict";
 

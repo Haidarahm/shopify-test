@@ -1,4 +1,3 @@
-/* checkout-preview.js — boot */
 (function () {
   "use strict";
 

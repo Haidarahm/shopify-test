@@ -1,8 +1,3 @@
-/**
- * Require Shopify customer sign-in before checkout.
- * Always use /customer_authentication/login (new customer accounts).
- * Do NOT use /account/login — that is the classic email/password form (no Google).
- */
 (function () {
   var SEEN_KEY = 'account_login_gate_seen';
   var PENDING_KEY = 'pending_checkout_after_login';
@@ -11,8 +6,6 @@
     var returnTo = encodeURIComponent('/cart');
     var canonical = (window.shopCanonicalUrl || '').replace(/\/$/, '');
     var origin = window.location.origin || '';
-
-    // Real shop host only — localhost theme-dev returns 401 for this path
     if (canonical && !/127\.0\.0\.1|localhost/i.test(canonical)) {
       return (
         canonical +
@@ -28,8 +21,6 @@
         returnTo
       );
     }
-
-    // Last resort (may 401 on theme-dev localhost)
     return '/customer_authentication/login?return_to=' + returnTo;
   }
 
@@ -45,7 +36,7 @@
     try {
       sessionStorage.setItem(SEEN_KEY, '1');
     } catch (e) {
-      /* ignore */
+      
     }
     var gate = document.getElementById('AccountLoginGate');
     var needsCheckout =
@@ -54,7 +45,7 @@
       try {
         sessionStorage.setItem(PENDING_KEY, '1');
       } catch (e) {
-        /* ignore */
+        
       }
     }
     hideGate(true);
@@ -70,7 +61,7 @@
     try {
       sessionStorage.setItem(PENDING_KEY, '1');
     } catch (e) {
-      /* ignore */
+      
     }
     showGate(true);
   }
@@ -97,7 +88,7 @@
       try {
         sessionStorage.removeItem(PENDING_KEY);
       } catch (e) {
-        /* ignore */
+        
       }
     }
     gate.removeAttribute('data-checkout-required');
@@ -128,7 +119,7 @@
           }
         }
       } catch (e) {
-        /* ignore */
+        
       }
       return;
     }
@@ -141,7 +132,7 @@
           try {
             sessionStorage.setItem(SEEN_KEY, '1');
           } catch (e) {
-            /* ignore */
+            
           }
         });
       });

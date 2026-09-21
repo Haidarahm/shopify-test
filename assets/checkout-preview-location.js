@@ -1,4 +1,3 @@
-/* checkout-preview-location.js — theme asset (no ES modules) */
 (function (global) {
   "use strict";
 
