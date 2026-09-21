@@ -1,5 +1,5 @@
 <!doctype html>
-<html class="no-js" lang="{{ request.locale.iso_code }}" {% if customer %}data-customer-logged-in="true"{% else %}data-customer-logged-in="false"{% endif %}>
+<html class="no-js" lang="{{ request.locale.iso_code }}" {% if customer %}data-customer-logged-in="true"{% else %}data-customer-logged-in="false"{% endif %} data-cart-empty="{% if cart.empty? %}true{% else %}false{% endif %}" data-cart-item-count="{{ cart.item_count }}">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -249,9 +249,11 @@
       {{ 'accessibility.skip_to_text' | t }}
     </a>
 
-    {%- if settings.cart_type == 'drawer' -%}
-      {%- render 'cart-drawer' -%}
-    {%- endif -%}
+    {%- comment -%}
+      Keep Dawn cart-drawer mounted even when cart_type is page so empty carts
+      can open the default "Your cart is empty" drawer.
+    {%- endcomment -%}
+    {%- render 'cart-drawer' -%}
 
     {% sections 'header-group' %}
 

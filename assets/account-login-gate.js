@@ -13,6 +13,17 @@
     return window.location.pathname.indexOf('/cart') === 0;
   }
 
+  function isCartEmpty() {
+    return document.documentElement.getAttribute('data-cart-empty') === 'true';
+  }
+
+  function openEmptyCartDrawer() {
+    var drawer = document.querySelector('cart-drawer');
+    if (!drawer || typeof drawer.open !== 'function') return false;
+    drawer.open(document.querySelector('#cart-icon-bubble'));
+    return true;
+  }
+
   function accountEl() {
     var nodes = document.querySelectorAll('shopify-account');
     var fallback = null;
@@ -111,7 +122,7 @@
   }
 
   function showFallback() {
-    if (isLoggedIn() || !isCartPage()) return;
+    if (isLoggedIn() || !isCartPage() || isCartEmpty()) return;
     if (isOpen(accountEl())) return;
 
     var box = document.getElementById(FALLBACK_ID);
@@ -166,6 +177,11 @@
 
     btn.addEventListener('click', function (e) {
       if (isLoggedIn()) return;
+      if (isCartEmpty()) {
+        e.preventDefault();
+        openEmptyCartDrawer();
+        return;
+      }
       e.preventDefault();
       if (!openShopifyAccount()) showFallback();
     });
@@ -173,6 +189,16 @@
 
   function tryAutoOpen() {
     if (!isCartPage() || isLoggedIn()) return;
+
+    // Empty cart: open Dawn's default empty drawer, never the login sheet.
+    if (isCartEmpty()) {
+      var tries = 0;
+      var timer = window.setInterval(function () {
+        tries += 1;
+        if (openEmptyCartDrawer() || tries > 40) window.clearInterval(timer);
+      }, 100);
+      return;
+    }
 
     var ready =
       window.customElements && customElements.whenDefined
@@ -188,7 +214,6 @@
           var opened = openShopifyAccount();
           if (opened || tries > 50) {
             window.clearInterval(timer);
-            // iPhone Safari often blocks auto-open — show a tappable sheet instead.
             if (!opened && !isOpen(accountEl())) showFallback();
           }
         }, 100);

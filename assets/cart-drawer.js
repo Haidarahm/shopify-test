@@ -9,14 +9,18 @@ class CartDrawer extends HTMLElement {
 
   setHeaderCartIconAccessibility() {
     const cartLink = document.querySelector('#cart-icon-bubble');
+    if (!cartLink) return;
     cartLink.setAttribute('role', 'button');
     cartLink.setAttribute('aria-haspopup', 'dialog');
     cartLink.addEventListener('click', (event) => {
+      // Empty cart → Dawn empty drawer. Filled cart → /cart checkout page.
+      if (!this.classList.contains('is-empty')) return;
       event.preventDefault();
-      this.open(cartLink)
+      this.open(cartLink);
     });
     cartLink.addEventListener('keydown', (event) => {
       if (event.code.toUpperCase() === 'SPACE') {
+        if (!this.classList.contains('is-empty')) return;
         event.preventDefault();
         this.open(cartLink);
       }
