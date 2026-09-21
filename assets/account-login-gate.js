@@ -1,9 +1,16 @@
 (function () {
   var COMPACT_STYLE_ID = 'account-sheet-compact';
-  var CHECKOUT_URL = 'https://beisat.space/checkout';
+  var FALLBACK_ID = 'account-login-fallback';
+  var isIOS =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   function isLoggedIn() {
     return document.documentElement.getAttribute('data-customer-logged-in') === 'true';
+  }
+
+  function isCartPage() {
+    return window.location.pathname.indexOf('/cart') === 0;
   }
 
   function accountEl() {
@@ -14,19 +21,22 @@
       var rect = el.getBoundingClientRect();
       var style = window.getComputedStyle(el);
       var parent = el.parentElement;
+      var parentStyle = parent ? window.getComputedStyle(parent) : null;
       var parentHidden =
-        parent &&
-        (window.getComputedStyle(parent).display === 'none' ||
-          window.getComputedStyle(parent).visibility === 'hidden');
+        parentStyle &&
+        (parentStyle.display === 'none' || parentStyle.visibility === 'hidden');
       if (parentHidden || style.display === 'none') continue;
       if (rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden') return el;
       if (!fallback) fallback = el;
     }
-    return fallback;
+    return fallback || nodes[0] || null;
   }
 
   function compactSheet(el) {
     if (!el || !el.shadowRoot) return;
+    // Skip aggressive height overrides on iOS — they can make the dialog invisible in Safari.
+    if (isIOS) return;
+
     if (!el.shadowRoot.getElementById(COMPACT_STYLE_ID)) {
       var style = document.createElement('style');
       style.id = COMPACT_STYLE_ID;
@@ -36,8 +46,7 @@
         '.account__content{padding:12px 14px 14px!important;gap:10px!important;margin-top:-10px!important;}' +
         '.account__menu-region{margin-top:4px!important;}' +
         '.stack-inline{gap:6px!important;}' +
-        '.button.outline{padding:10px 14px!important;min-height:0!important;}' +
-        '.shop-login,.social-login{margin:0!important;}';
+        '.button.outline{padding:10px 14px!important;min-height:0!important;}';
       el.shadowRoot.appendChild(style);
     }
 
@@ -50,7 +59,8 @@
   }
 
   function isOpen(el) {
-    var dialog = el.shadowRoot && el.shadowRoot.querySelector('dialog');
+    if (!el || !el.shadowRoot) return false;
+    var dialog = el.shadowRoot.querySelector('dialog');
     return !!(dialog && dialog.open);
   }
 
@@ -58,40 +68,94 @@
     var el = accountEl();
     if (!el) return false;
     compactSheet(el);
-    if (isOpen(el)) return true;
-
-    if (typeof el.showModal === 'function') {
-      el.showModal();
-      compactSheet(el);
-      requestAnimationFrame(function () {
-        compactSheet(el);
-      });
-      if (isOpen(el)) return true;
+    if (isOpen(el)) {
+      hideFallback();
+      return true;
     }
+
+    try {
+      if (typeof el.showModal === 'function') {
+        el.showModal();
+        compactSheet(el);
+        if (isOpen(el)) {
+          hideFallback();
+          return true;
+        }
+      }
+    } catch (e) {}
 
     var btn =
-      (el.shadowRoot && el.shadowRoot.querySelector('button')) ||
+      (el.shadowRoot &&
+        (el.shadowRoot.querySelector('[part="signed-out-avatar"]') ||
+          el.shadowRoot.querySelector('button'))) ||
       el.querySelector('[slot="signed-out-avatar"]') ||
       el;
-    if (btn && typeof btn.click === 'function') {
-      btn.click();
-      compactSheet(el);
-      return isOpen(el);
+    try {
+      if (btn && typeof btn.click === 'function') {
+        btn.click();
+        compactSheet(el);
+        if (isOpen(el)) {
+          hideFallback();
+          return true;
+        }
+      }
+    } catch (e2) {}
+
+    return isOpen(el);
+  }
+
+  function hideFallback() {
+    var box = document.getElementById(FALLBACK_ID);
+    if (box) box.classList.remove('is-visible');
+    document.body.classList.remove('account-login-fallback-open');
+  }
+
+  function showFallback() {
+    if (isLoggedIn() || !isCartPage()) return;
+    if (isOpen(accountEl())) return;
+
+    var box = document.getElementById(FALLBACK_ID);
+    if (!box) {
+      box = document.createElement('div');
+      box.id = FALLBACK_ID;
+      box.className = 'account-login-fallback';
+      box.setAttribute('role', 'dialog');
+      box.setAttribute('aria-modal', 'true');
+      box.innerHTML =
+        '<p class="account-login-fallback__title">Sign in or create account</p>' +
+        '<p class="account-login-fallback__text">Continue with Google, Shop, or email to check out.</p>' +
+        '<button type="button" class="account-login-fallback__btn" id="account-login-fallback-open">Continue to sign in</button>' +
+        '<button type="button" class="account-login-fallback__dismiss" id="account-login-fallback-dismiss">Not now</button>';
+      document.body.appendChild(box);
+
+      document.getElementById('account-login-fallback-open').addEventListener('click', function () {
+        // Real user gesture — required for iPhone Safari to open the Shopify sheet.
+        if (openShopifyAccount()) {
+          hideFallback();
+          return;
+        }
+        // Last resort: go to Shopify hosted login (includes Google).
+        window.location.href = '/customer_authentication/login?return_to=' + encodeURIComponent('/cart');
+      });
+      document.getElementById('account-login-fallback-dismiss').addEventListener('click', hideFallback);
     }
-    return false;
+
+    box.classList.add('is-visible');
+    document.body.classList.add('account-login-fallback-open');
   }
 
   function wireCompact() {
     document.querySelectorAll('shopify-account').forEach(function (el) {
       compactSheet(el);
       el.addEventListener('open', function () {
+        hideFallback();
         compactSheet(el);
         requestAnimationFrame(function () {
           compactSheet(el);
-          setTimeout(function () {
-            compactSheet(el);
-          }, 50);
         });
+      });
+      el.addEventListener('close', function () {
+        // Keep cart usable after dismiss.
       });
     });
   }
@@ -101,28 +165,40 @@
     if (!btn) return;
 
     btn.addEventListener('click', function (e) {
-      if (isLoggedIn()) {
-        e.preventDefault();
-        window.location.href = CHECKOUT_URL;
-        return;
-      }
+      if (isLoggedIn()) return;
       e.preventDefault();
-      openShopifyAccount();
+      if (!openShopifyAccount()) showFallback();
     });
+  }
+
+  function tryAutoOpen() {
+    if (!isCartPage() || isLoggedIn()) return;
+
+    var ready =
+      window.customElements && customElements.whenDefined
+        ? customElements.whenDefined('shopify-account')
+        : Promise.resolve();
+
+    ready
+      .catch(function () {})
+      .then(function () {
+        var tries = 0;
+        var timer = window.setInterval(function () {
+          tries += 1;
+          var opened = openShopifyAccount();
+          if (opened || tries > 50) {
+            window.clearInterval(timer);
+            // iPhone Safari often blocks auto-open — show a tappable sheet instead.
+            if (!opened && !isOpen(accountEl())) showFallback();
+          }
+        }, 100);
+      });
   }
 
   function boot() {
     wireCompact();
     wireContinue();
-
-    if (window.location.pathname.indexOf('/cart') !== 0) return;
-    if (isLoggedIn()) return;
-
-    var tries = 0;
-    var timer = window.setInterval(function () {
-      tries += 1;
-      if (openShopifyAccount() || tries > 40) window.clearInterval(timer);
-    }, 100);
+    tryAutoOpen();
   }
 
   if (document.readyState === 'loading') {
