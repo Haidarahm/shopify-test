@@ -176,14 +176,28 @@
     if (!btn) return;
 
     btn.addEventListener('click', function (e) {
-      if (isLoggedIn()) return;
+      e.preventDefault();
+
       if (isCartEmpty()) {
-        e.preventDefault();
         openEmptyCartDrawer();
         return;
       }
-      e.preventDefault();
-      if (!openShopifyAccount()) showFallback();
+
+      var api = window.CheckoutPreview;
+      if (api && typeof api.ensureProceedReady === 'function' && !api.ensureProceedReady()) {
+        return;
+      }
+
+      if (!isLoggedIn()) {
+        if (!openShopifyAccount()) showFallback();
+        return;
+      }
+
+      if (api && typeof api.goToCheckoutWithPrefill === 'function') {
+        api.goToCheckoutWithPrefill();
+        return;
+      }
+      window.location.href = btn.getAttribute('href') || '/checkout';
     });
   }
 

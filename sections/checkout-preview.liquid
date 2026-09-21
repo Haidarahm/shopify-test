@@ -5,6 +5,7 @@
   id="checkout-preview-root"
   data-countries-url="{{ 'checkout-preview-countries.json' | asset_url }}"
   data-map-url="{{ 'checkout-preview-map.json' | asset_url }}"
+  {% if customer and customer.email != blank %}data-customer-email="{{ customer.email | escape }}"{% endif %}
 >
   {% render 'checkout-header' %}
   {% render 'checkout-order-items' %}
