@@ -274,8 +274,15 @@
     }
 
     input.addEventListener("input", function () {
-      if (field.classList.contains("field--error")) clearError();
+      // Keep error style while invalid; only clear once the number validates.
+      if (field.classList.contains("field--error")) {
+        phoneTouched = true;
+        phoneValidate();
+      }
       savePhoneDraft();
+      if (global.CheckoutPreview && typeof global.CheckoutPreview.syncProceedButton === "function") {
+        global.CheckoutPreview.syncProceedButton();
+      }
     });
     input.addEventListener("change", savePhoneDraft);
     input.addEventListener("blur", function (e) {
@@ -287,6 +294,9 @@
         phoneTouched = true;
         phoneValidate();
         savePhoneDraft();
+        if (global.CheckoutPreview && typeof global.CheckoutPreview.syncProceedButton === "function") {
+          global.CheckoutPreview.syncProceedButton();
+        }
       }, 0);
     });
 

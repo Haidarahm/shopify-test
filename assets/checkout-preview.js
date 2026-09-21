@@ -156,53 +156,60 @@
     if (target && typeof target.scrollIntoView === "function") {
       target.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-    window.setTimeout(function () {
-      if (issue.focusEl && typeof issue.focusEl.focus === "function") {
-        try {
-          issue.focusEl.focus({ preventScroll: true });
-        } catch (e) {
-          issue.focusEl.focus();
-        }
+    function focusTarget() {
+      if (!issue.focusEl || typeof issue.focusEl.focus !== "function") return;
+      try {
+        issue.focusEl.focus({ preventScroll: true });
+      } catch (e) {
+        issue.focusEl.focus();
       }
-    }, 280);
+      if (issue.id === "phone" && typeof issue.focusEl.select === "function") {
+        try {
+          issue.focusEl.select();
+        } catch (e2) {}
+      }
+    }
+    focusTarget();
+    window.setTimeout(focusTarget, 280);
+    window.setTimeout(focusTarget, 450);
   }
 
-  function validateProceedFields(opts) {
-    var showErrors = !opts || opts.showErrors !== false;
+  // Keep error UI visible after a failed proceed click until that field is fixed.
+  var revealedErrors = { name: false, phone: false, location: false };
+
+  function applyRevealedErrors() {
     var issues = getFormIssues();
-    var phoneIssue = null;
-    var nameIssue = null;
-    for (var i = 0; i < issues.length; i++) {
-      if (issues[i].id === "name") nameIssue = issues[i];
-      if (issues[i].id === "phone") phoneIssue = issues[i];
-    }
+    var byId = {};
+    for (var i = 0; i < issues.length; i++) byId[issues[i].id] = issues[i];
+
+    ["name", "phone", "location"].forEach(function (id) {
+      if (!byId[id]) revealedErrors[id] = false;
+    });
 
     markFieldError(
       {
         fieldId: "full-name-field",
         errorId: "full-name-error",
         inputId: "full-name",
-        message: nameIssue && nameIssue.message,
+        message: (byId.name && byId.name.message) || "Full name is required",
       },
-      showErrors && !!nameIssue
+      !!(revealedErrors.name && byId.name)
     );
     markFieldError(
       {
         fieldId: "phone-number-field",
         errorId: "phone-number-error",
         inputId: "phone-number",
-        message: phoneIssue && phoneIssue.message,
+        message: (byId.phone && byId.phone.message) || "Enter a valid phone number",
       },
-      showErrors && !!phoneIssue
+      !!(revealedErrors.phone && byId.phone)
     );
 
     var locRow = document.getElementById("shipping-address-row");
     var locBtn = document.getElementById("address-action-btn");
-    var locMissing = issues.some(function (issue) {
-      return issue.id === "location";
-    });
-    if (locBtn) locBtn.classList.toggle("is-invalid", showErrors && locMissing);
-    if (locRow) locRow.classList.toggle("is-invalid", showErrors && locMissing);
+    var locShow = !!(revealedErrors.location && byId.location);
+    if (locBtn) locBtn.classList.toggle("is-invalid", locShow);
+    if (locRow) locRow.classList.toggle("is-invalid", locShow);
 
     return {
       ok: issues.length === 0,
@@ -211,15 +218,26 @@
     };
   }
 
+  function validateProceedFields(opts) {
+    var showErrors = !opts || opts.showErrors !== false;
+    var issues = getFormIssues();
+    if (showErrors) {
+      for (var i = 0; i < issues.length; i++) {
+        revealedErrors[issues[i].id] = true;
+      }
+    }
+    return applyRevealedErrors();
+  }
+
   function syncProceedButton() {
     var btn = document.getElementById("checkout-continue-btn");
-    if (!btn) return validateProceedFields({ showErrors: false }).ok;
-    var ok = validateProceedFields({ showErrors: false }).ok;
-    btn.classList.toggle("is-disabled", !ok);
-    btn.setAttribute("aria-disabled", ok ? "false" : "true");
-    if (ok) btn.removeAttribute("tabindex");
+    var result = applyRevealedErrors();
+    if (!btn) return result.ok;
+    btn.classList.toggle("is-disabled", !result.ok);
+    btn.setAttribute("aria-disabled", result.ok ? "false" : "true");
+    if (result.ok) btn.removeAttribute("tabindex");
     else btn.setAttribute("tabindex", "-1");
-    return ok;
+    return result.ok;
   }
 
   function ensureProceedReady() {
