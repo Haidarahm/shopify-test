@@ -1,5 +1,4 @@
 {%- unless customer -%}
-  
   {%- capture checkout_auth_url -%}https://{{ shop.permanent_domain }}/customer_authentication/login?return_to={{ '/cart' | url_encode }}{%- endcapture -%}
   <script>
     window.location.replace({{ checkout_auth_url | json }});
@@ -32,7 +31,6 @@
       aria-labelledby="location-sheet-title"
     >
       <h2 id="location-sheet-title" class="location-sheet__title">Select Location on Map</h2>
-      <p class="location-sheet__subtitle">Add an location for this order</p>
       <label class="location-sheet__search" for="location-search-input">
         <svg class="location-sheet__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="7" />
@@ -60,7 +58,6 @@
       aria-labelledby="country-sheet-title"
     >
       <h2 id="country-sheet-title" class="location-sheet__title">Select country code</h2>
-      <p class="location-sheet__subtitle">Search or pick a country for your phone number</p>
       <label class="location-sheet__search" for="country-search-input">
         <svg class="location-sheet__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="7" />
