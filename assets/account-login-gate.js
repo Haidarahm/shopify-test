@@ -1,5 +1,10 @@
 (function () {
   var COMPACT_STYLE_ID = 'account-sheet-compact';
+  var CHECKOUT_URL = 'https://beisat.space/checkout';
+
+  function isLoggedIn() {
+    return document.documentElement.getAttribute('data-customer-logged-in') === 'true';
+  }
 
   function accountEl() {
     var nodes = document.querySelectorAll('shopify-account');
@@ -76,23 +81,11 @@
     return false;
   }
 
-  function openOnCart() {
-    if (window.location.pathname.indexOf('/cart') !== 0) return;
-    if (document.documentElement.getAttribute('data-customer-logged-in') === 'true') return;
-
-    var tries = 0;
-    var timer = window.setInterval(function () {
-      tries += 1;
-      if (openShopifyAccount() || tries > 40) window.clearInterval(timer);
-    }, 100);
-  }
-
   function wireCompact() {
     document.querySelectorAll('shopify-account').forEach(function (el) {
       compactSheet(el);
       el.addEventListener('open', function () {
         compactSheet(el);
-        // Shopify sets --dialog-min-height after open; clear it again.
         requestAnimationFrame(function () {
           compactSheet(el);
           setTimeout(function () {
@@ -103,10 +96,27 @@
     });
   }
 
-  function openOnCart() {
+  function wireContinue() {
+    var btn = document.getElementById('checkout-continue-btn');
+    if (!btn) return;
+
+    btn.addEventListener('click', function (e) {
+      if (isLoggedIn()) {
+        e.preventDefault();
+        window.location.href = CHECKOUT_URL;
+        return;
+      }
+      e.preventDefault();
+      openShopifyAccount();
+    });
+  }
+
+  function boot() {
     wireCompact();
+    wireContinue();
+
     if (window.location.pathname.indexOf('/cart') !== 0) return;
-    if (document.documentElement.getAttribute('data-customer-logged-in') === 'true') return;
+    if (isLoggedIn()) return;
 
     var tries = 0;
     var timer = window.setInterval(function () {
@@ -116,8 +126,8 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', openOnCart);
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    openOnCart();
+    boot();
   }
 })();

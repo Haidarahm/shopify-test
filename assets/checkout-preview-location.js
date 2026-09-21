@@ -208,7 +208,7 @@
     if (row) row.hidden = true;
   }
 
-  function setAddress(label) {
+  function setAddress(label, opts) {
     var row = document.getElementById("shipping-address-row");
     var addressEl = document.getElementById("shipping-address-text");
     var btn = document.getElementById("address-action-btn");
@@ -218,6 +218,10 @@
     }
     if (row) row.hidden = false;
     if (btn) btn.textContent = "Change Address";
+    if (!opts || opts.persist !== false) {
+      var api = global.CheckoutPreview;
+      if (api && api.draftPatch) api.draftPatch({ location: label });
+    }
     closeLocationSheet();
   }
 
@@ -308,6 +312,13 @@
     if (!addressEl) return Promise.resolve();
 
     wireLocationSearch();
+
+    var api = global.CheckoutPreview;
+    var draft = api && api.draftGet ? api.draftGet() : {};
+    if (draft.location) {
+      setAddress(draft.location, { persist: false });
+      return loadMap().catch(function () {});
+    }
 
     return Promise.all([getPosition(), loadMap()])
       .then(function (results) {

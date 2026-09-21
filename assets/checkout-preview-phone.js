@@ -139,7 +139,17 @@
       });
   }
 
-  function applyCountry(country) {
+  function savePhoneDraft() {
+    var api = global.CheckoutPreview;
+    var phoneInput = document.getElementById("phone-number");
+    if (!api || !api.draftPatch || !phoneInput) return;
+    api.draftPatch({
+      phone: phoneInput.value.trim(),
+      phoneIso: selectedIso,
+    });
+  }
+
+  function applyCountry(country, opts) {
     selectedIso = country.iso;
     var flagEl = document.getElementById("phone-prefix-flag");
     var codeEl = document.getElementById("phone-prefix-code");
@@ -163,6 +173,7 @@
       phoneInput.maxLength = country.max + 4;
     }
     if (phoneTouched) phoneValidate();
+    if (!opts || opts.persist !== false) savePhoneDraft();
   }
 
   function openCountrySheet() {
@@ -264,7 +275,9 @@
 
     input.addEventListener("input", function () {
       if (field.classList.contains("field--error")) clearError();
+      savePhoneDraft();
     });
+    input.addEventListener("change", savePhoneDraft);
     input.addEventListener("blur", function (e) {
       if (isCountryPickerTarget(e.relatedTarget)) return;
       setTimeout(function () {
@@ -273,10 +286,29 @@
         if (sheet && sheet.classList.contains("is-open")) return;
         phoneTouched = true;
         phoneValidate();
+        savePhoneDraft();
       }, 0);
     });
 
     clearError();
+  }
+
+  function restorePhoneDraft() {
+    var api = global.CheckoutPreview;
+    var draft = api && api.draftGet ? api.draftGet() : {};
+    var phoneInput = document.getElementById("phone-number");
+    if (!phoneInput) return;
+    if (draft.phoneIso) {
+      for (var i = 0; i < countries.length; i++) {
+        if (countries[i].iso === draft.phoneIso) {
+          applyCountry(countries[i], { persist: false });
+          break;
+        }
+      }
+    }
+    if (draft.phone) {
+      phoneInput.value = draft.phone;
+    }
   }
 
   function wirePhoneCountryPicker() {
@@ -288,7 +320,7 @@
 
     return loadCountries().then(function () {
       wirePhoneValidation();
-      applyCountry(selectedCountry());
+      applyCountry(selectedCountry(), { persist: false });
       btn.addEventListener("click", openCountrySheet);
       input.addEventListener("input", function () {
         renderCountryResults(searchCountries(input.value));
@@ -314,6 +346,7 @@
 
   global.CheckoutPreview = global.CheckoutPreview || {};
   global.CheckoutPreview.wirePhoneCountryPicker = wirePhoneCountryPicker;
+  global.CheckoutPreview.restorePhoneDraft = restorePhoneDraft;
   global.CheckoutPreview.validatePhoneNumber = validatePhoneNumber;
   global.CheckoutPreview.normalizeNationalNumber = normalizeNationalNumber;
 })(typeof window !== "undefined" ? window : this);
