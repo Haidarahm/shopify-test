@@ -1,0 +1,35 @@
+{% comment %}
+  Login gate for guests: first-visit prompt + checkout requires sign-in.
+  Uses Shopify's hosted customer authentication (Google/email when enabled in Admin).
+  Does not alter checkout UI markup.
+{% endcomment %}
+{%- if shop.customer_accounts_enabled and customer == nil -%}
+  {{ 'account-login-gate.css' | asset_url | stylesheet_tag }}
+  <div
+    id="AccountLoginGate"
+    class="account-login-gate"
+    hidden
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="AccountLoginGateTitle"
+  >
+    <div class="account-login-gate__backdrop" data-login-gate-dismiss></div>
+    <div class="account-login-gate__panel">
+      <h2 id="AccountLoginGateTitle" class="account-login-gate__title">Sign in to continue</h2>
+      <p class="account-login-gate__text">
+        Opens Shopify sign-in. If Google is connected in Admin, choose <strong>Continue with Google</strong>.
+      </p>
+      <a
+        class="button button--primary account-login-gate__cta"
+        href="https://{{ shop.permanent_domain }}/customer_authentication/login?return_to={{ '/cart' | url_encode }}"
+        data-login-gate-signin
+      >
+        Continue to sign in
+      </a>
+      <button type="button" class="link account-login-gate__later" data-login-gate-dismiss>
+        Not now
+      </button>
+    </div>
+  </div>
+  <script src="{{ 'account-login-gate.js' | asset_url }}" defer="defer"></script>
+{%- endif -%}

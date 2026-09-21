@@ -230,16 +230,14 @@
                 </nav>
                 <div class="menu-drawer__utility-links">
                   {%- if shop.customer_accounts_enabled -%}
-                    <a href="{%- if customer -%}{{ routes.account_url }}{%- else -%}{{ routes.account_login_url }}{%- endif -%}" class="menu-drawer__account link focus-inset h5 medium-hide large-up-hide">
-                      {% render 'icon-account' %}
-                      {%- liquid
-                        if customer
-                          echo 'customer.account_fallback' | t
-                        else
-                          echo 'customer.log_in' | t
-                        endif
-                      -%}
-                    </a>
+                    <div class="menu-drawer__account link focus-inset h5 medium-hide large-up-hide">
+                      <shopify-account menu="customer-account-main-menu">
+                        <span slot="signed-out-avatar" class="header__icon header__icon--account">
+                          {% render 'icon-account' %}
+                          <span class="visually-hidden">{{ 'customer.log_in' | t }}</span>
+                        </span>
+                      </shopify-account>
+                    </div>
                   {%- endif -%}
                   {%- if section.settings.enable_country_selector or section.settings.enable_language_selector -%}
                     <div class="menu-drawer__localization header__localization">
@@ -698,18 +696,14 @@
       </details-modal>
 
       {%- if shop.customer_accounts_enabled -%}
-        <a href="{%- if customer -%}{{ routes.account_url }}{%- else -%}{{ routes.account_login_url }}{%- endif -%}" class="header__icon header__icon--account link focus-inset{% if section.settings.menu != blank %} small-hide{% endif %}">
-          {% render 'icon-account' %}
-          <span class="visually-hidden">
-            {%- liquid
-              if customer
-                echo 'customer.account_fallback' | t
-              else
-                echo 'customer.log_in' | t
-              endif
-            -%}
-          </span>
-        </a>
+        <div class="header__icon header__icon--account focus-inset{% if section.settings.menu != blank %} small-hide{% endif %}">
+          <shopify-account menu="customer-account-main-menu">
+            <span slot="signed-out-avatar" class="header__icon header__icon--account">
+              {% render 'icon-account' %}
+              <span class="visually-hidden">{{ 'customer.log_in' | t }}</span>
+            </span>
+          </shopify-account>
+        </div>
       {%- endif -%}
 
       {%- for block in section.blocks -%}

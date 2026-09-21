@@ -1,0 +1,80 @@
+/* Account login gate modal — storefront only (not checkout UI) */
+.account-login-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.6rem;
+}
+
+.account-login-gate[hidden] {
+  display: none !important;
+}
+
+.account-login-gate__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.account-login-gate__panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 36rem);
+  padding: 2.4rem 2rem;
+  border-radius: 1.2rem;
+  background: rgb(var(--color-background));
+  color: rgb(var(--color-foreground));
+  box-shadow: 0 1.2rem 3.2rem rgba(0, 0, 0, 0.18);
+  text-align: center;
+}
+
+.account-login-gate__title {
+  margin: 0 0 0.8rem;
+  font-size: 2rem;
+}
+
+.account-login-gate__text {
+  margin: 0 0 1.6rem;
+  font-size: 1.4rem;
+  line-height: 1.45;
+  opacity: 0.85;
+}
+
+.account-login-gate__cta {
+  width: 100%;
+  margin-bottom: 1.2rem;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.account-login-gate__later {
+  display: inline-block;
+  font-size: 1.3rem;
+}
+
+shopify-account {
+  --shopify-account-signed-in-avatar-size: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header__icon--account shopify-account,
+.menu-drawer__account shopify-account {
+  line-height: 0;
+}
+
+.header__icon--account shopify-account::part(signed-out-avatar),
+.menu-drawer__account shopify-account::part(signed-out-avatar) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
